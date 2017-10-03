@@ -52,39 +52,21 @@ func LvmPvListGet() []string {
 	n := C.wrapper_dm_list_iterate_items(pvsList, cargs)
 	gs := GoStrings(n, cargs)
 
-	fmt.Printf("pvsList: %#v\n", gs)
+	fmt.Printf("(test)pvsList: %#v\n", gs)
 	return gs
 }
 
-func LvmVgOpen(vgname string, mode string) C.vg_t {
+func VgOpen(vgname string, mode string) C.vg_t {
 	if mode == "" {
 		mode = "r"
 	}
 	vg := C.lvm_vg_open(libh, C.CString(vgname), C.CString(mode), 0)
 	return vg
-
 }
 
 type GoObject struct {
-}
-
-// uint 64 for size?
-func CreateLvLinear(vgobject *C.struct_volume_group, n string, s int64) GoObject {
-	size := C.uint64_t(s)
-	name := C.CString(n)
-
-	lv := C.lvm_vg_create_lv_linear(vgobject, name, size)
-	//	vg := LvmVgOpen("foo", "r")
-	//	a := []string{"fo"}
-	return create_go_lv(vgobject, lv)
-}
-
-//type C.vg_t C.struct_volume_group
-
-func create_go_lv(vgobject *C.struct_volume_group, lv C.lv_t) GoObject {
-	return GoObject{
-	//	TODO
-	}
+	vgt C.vg_t
+	lvt C.lv_t
 }
 
 func GoStrings(argc C.int, argv **C.char) []string {
@@ -95,4 +77,134 @@ func GoStrings(argc C.int, argv **C.char) []string {
 		gostrings[i] = C.GoString(s)
 	}
 	return gostrings
+}
+
+// TODO: should be for lvt
+func (g *GoObject) getUuid() *C.char {
+	return C.lvm_lv_get_uuid(g.lvt)
+}
+
+// VG methods
+type vgObject struct {
+	vgt C.vg_t
+}
+
+//getName
+func (v *vgObject) getName() *C.char {
+	return C.lvm_vg_get_name(v.vgt)
+}
+
+//getUuid
+func (v *vgObject) getUuid() *C.char {
+	return C.lvm_vg_get_uuid(v.vgt)
+}
+
+// close
+
+// PvList lists of pvs from VG
+func (v *vgObject) PvList() []string {
+	pvs := C.lvm_vg_list_pvs(v.vgt)
+	if pvs == nil {
+		return []string{""}
+	}
+	cargs := C.makeCharArray(C.int(0))
+	n := C.wrapper_dm_list_iterate_items(pvs, cargs)
+	gs := GoStrings(n, cargs)
+	fmt.Printf("(test)pvsList: %#v\n", gs)
+	return gs
+
+}
+
+// GetSize returns size of VG
+func (v *vgObject) GetSize() C.uint64_t {
+	return C.lvm_vg_get_size(v.vgt)
+}
+
+// LvList lists of lvs from VG
+func (v *vgObject) LvList() []string {
+	lvl := C.lvm_vg_list_lvs(v.vgt)
+	if lvl == nil {
+		return []string{""}
+	}
+	cargs := C.makeCharArray(C.int(0))
+	n := C.wrapper_dm_list_iterate_items(lvl, cargs)
+	gs := GoStrings(n, cargs)
+	fmt.Printf("(test)lvList: %#v\n", gs)
+	return gs
+}
+
+// GetFreeSize returns free size of VG
+func (v *vgObject) GetFreeSize() C.uint64_t {
+	return C.lvm_vg_get_free_size(v.vgt)
+}
+
+func createGoLv(v *vgObject, lv C.lv_t) *lvObject {
+	return &lvObject{
+		lvt:      lv,
+		parentVG: v,
+	}
+}
+
+func (v *vgObject) CreateLvLinear(n string, s int64) *lvObject {
+	//func (v *vgObject) CreateLvLinear(n string, s int64) *C.struct_logical_volume {
+	size := C.uint64_t(s)
+	name := C.CString(n)
+
+	lv := C.lvm_vg_create_lv_linear(v.vgt, name, size)
+	if lv == nil {
+		fmt.Printf("nil")
+	}
+	return createGoLv(v, lv)
+	//	return &lvObject{lvt: lv}
+	//	return lv
+}
+
+// ######################################## LV ###################################
+
+// LV object
+type lvObject struct {
+	lvt      C.lv_t
+	parentVG *vgObject
+}
+
+// LV methods
+// getAttr
+func (l *lvObject) getAttr() *C.char {
+	return C.lvm_lv_get_attr(l.lvt)
+}
+
+// getOrigin
+func (l *lvObject) getOrigin() *C.char {
+	return C.lvm_lv_get_origin(l.lvt)
+}
+
+// getName
+func (l *lvObject) getName() *C.char {
+	return C.lvm_lv_get_name(l.lvt)
+}
+
+// getUuid
+func (l *lvObject) getUuid() *C.char {
+	return C.lvm_lv_get_uuid(l.lvt)
+}
+
+// RemoveLV
+func (l *lvObject) RemoveLv() error {
+	// TODO return
+	C.lvm_vg_remove_lv(l.lvt)
+	return nil
+}
+
+func (l *lvObject) addTag(stag string) error {
+	tag := C.CString(stag)
+	C.lvm_lv_add_tag(l.lvt, tag)
+	C.lvm_vg_write(l.parentVG.vgt)
+	return nil
+}
+
+func (l *lvObject) removeTag(stag string) error {
+	tag := C.CString(stag)
+	C.lvm_lv_remove_tag(l.lvt, tag)
+	C.lvm_vg_write(l.parentVG.vgt)
+	return nil
 }
