@@ -1,11 +1,20 @@
 language: go
 go:
-  - 1.x
+  - 1.8
 os:
   - linux
+compiler:
+  - gcc
+
 sudo: required
-before_install:
-  - go get -u github.com/nak3/go-lvm
+
+addons:
+  apt:
+    packages:
+      - liblvm2-dev
+      - libdevmapper-dev
+        #before_install:
+        #  - go get -u github.com/nak3/go-lvm
 script:
   - go build -tags=gofuzz ./...
   - go run cmd/example.go
