@@ -1,5 +1,5 @@
 all:
-	go build -o example example.go liblvm.go
+	go build -o example cmd/example.go
 run:
 	sudo ./example
 clean:

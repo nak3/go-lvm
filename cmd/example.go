@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	//	"time"
+	"github.com/nak3/go-lvm"
 )
 
 func main() {
-	vglist := ListVgNames()
-	ListVgUUIDs()
-	LvmPvListGet()
-	a := &vgObject{}
+	vglist := lvm.ListVgNames()
+	lvm.ListVgUUIDs()
+	lvm.LvmPvListGet()
+	a := &lvm.VgObject{}
 	//a.vgt = LvmVgOpen(vglist[1], "r")
-	a.vgt = VgOpen(vglist[1], "w")
+	a.Vgt = lvm.VgOpen(vglist[1], "w")
 
 	fmt.Printf("size: %d GiB\n", uint64(a.GetSize())/1024/1024/1024)
 
@@ -22,16 +22,16 @@ func main() {
 	// TODO /1024
 	fmt.Printf("Free size: %d KiB\n", uint64(a.GetFreeSize())/1024/1024)
 
-	l := &lvObject{}
+	l := &lvm.LvObject{}
 
 	l = a.CreateLvLinear("foo", int64(a.GetFreeSize())/1024/1024/2)
 
-	fmt.Printf("LV UUID: %#v\n", l.getUuid())
+	fmt.Printf("LV UUID: %#v\n", l.GetUuid())
 
-	l.addTag("Demo_tag")
+	l.AddTag("Demo_tag")
 
 	//	time.Sleep(10 * time.Second) // 3秒休む
-	l.removeTag("Demo_tag")
+	l.RemoveTag("Demo_tag")
 
 	l.RemoveLv()
 

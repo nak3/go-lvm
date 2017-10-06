@@ -1,7 +1,7 @@
-package main
+package lvm
 
 //#cgo LDFLAGS: -llvm2app
-//#include "macro_wrapper.c"
+//#include "macro_wrapper.h"
 import "C"
 import (
 	"fmt"
@@ -65,8 +65,8 @@ func VgOpen(vgname string, mode string) C.vg_t {
 }
 
 type GoObject struct {
-	vgt C.vg_t
-	lvt C.lv_t
+	Vgt C.vg_t
+	Lvt C.lv_t
 }
 
 func GoStrings(argc C.int, argv **C.char) []string {
@@ -79,31 +79,31 @@ func GoStrings(argc C.int, argv **C.char) []string {
 	return gostrings
 }
 
-// TODO: should be for lvt
-func (g *GoObject) getUuid() *C.char {
-	return C.lvm_lv_get_uuid(g.lvt)
+// TODO: should be for Lvt
+func (g *GoObject) GetUuid() *C.char {
+	return C.lvm_lv_get_uuid(g.Lvt)
 }
 
 // VG methods
-type vgObject struct {
-	vgt C.vg_t
+type VgObject struct {
+	Vgt C.vg_t
 }
 
 //getName
-func (v *vgObject) getName() *C.char {
-	return C.lvm_vg_get_name(v.vgt)
+func (v *VgObject) GetName() *C.char {
+	return C.lvm_vg_get_name(v.Vgt)
 }
 
 //getUuid
-func (v *vgObject) getUuid() *C.char {
-	return C.lvm_vg_get_uuid(v.vgt)
+func (v *VgObject) GetUuid() *C.char {
+	return C.lvm_vg_get_uuid(v.Vgt)
 }
 
 // close
 
 // PvList lists of pvs from VG
-func (v *vgObject) PvList() []string {
-	pvs := C.lvm_vg_list_pvs(v.vgt)
+func (v *VgObject) PvList() []string {
+	pvs := C.lvm_vg_list_pvs(v.Vgt)
 	if pvs == nil {
 		return []string{""}
 	}
@@ -116,13 +116,13 @@ func (v *vgObject) PvList() []string {
 }
 
 // GetSize returns size of VG
-func (v *vgObject) GetSize() C.uint64_t {
-	return C.lvm_vg_get_size(v.vgt)
+func (v *VgObject) GetSize() C.uint64_t {
+	return C.lvm_vg_get_size(v.Vgt)
 }
 
 // LvList lists of lvs from VG
-func (v *vgObject) LvList() []string {
-	lvl := C.lvm_vg_list_lvs(v.vgt)
+func (v *VgObject) LvList() []string {
+	lvl := C.lvm_vg_list_lvs(v.Vgt)
 	if lvl == nil {
 		return []string{""}
 	}
@@ -134,80 +134,80 @@ func (v *vgObject) LvList() []string {
 }
 
 // GetFreeSize returns free size of VG
-func (v *vgObject) GetFreeSize() C.uint64_t {
-	return C.lvm_vg_get_free_size(v.vgt)
+func (v *VgObject) GetFreeSize() C.uint64_t {
+	return C.lvm_vg_get_free_size(v.Vgt)
 }
 
-func createGoLv(v *vgObject, lv C.lv_t) *lvObject {
-	return &lvObject{
-		lvt:      lv,
+func createGoLv(v *VgObject, lv C.lv_t) *LvObject {
+	return &LvObject{
+		Lvt:      lv,
 		parentVG: v,
 	}
 }
 
-func (v *vgObject) CreateLvLinear(n string, s int64) *lvObject {
-	//func (v *vgObject) CreateLvLinear(n string, s int64) *C.struct_logical_volume {
+func (v *VgObject) CreateLvLinear(n string, s int64) *LvObject {
+	//func (v *VgObject) CreateLvLinear(n string, s int64) *C.struct_logical_volume {
 	size := C.uint64_t(s)
 	name := C.CString(n)
 
-	lv := C.lvm_vg_create_lv_linear(v.vgt, name, size)
+	lv := C.lvm_vg_create_lv_linear(v.Vgt, name, size)
 	if lv == nil {
 		fmt.Printf("nil")
 	}
 	return createGoLv(v, lv)
-	//	return &lvObject{lvt: lv}
+	//	return &LvObject{Lvt: lv}
 	//	return lv
 }
 
 // ######################################## LV ###################################
 
 // LV object
-type lvObject struct {
-	lvt      C.lv_t
-	parentVG *vgObject
+type LvObject struct {
+	Lvt      C.lv_t
+	parentVG *VgObject
 }
 
 // LV methods
 // getAttr
-func (l *lvObject) getAttr() *C.char {
-	return C.lvm_lv_get_attr(l.lvt)
+func (l *LvObject) getAttr() *C.char {
+	return C.lvm_lv_get_attr(l.Lvt)
 }
 
 // getOrigin
-func (l *lvObject) getOrigin() *C.char {
-	return C.lvm_lv_get_origin(l.lvt)
+func (l *LvObject) getOrigin() *C.char {
+	return C.lvm_lv_get_origin(l.Lvt)
 }
 
 // getName
-func (l *lvObject) getName() *C.char {
-	return C.lvm_lv_get_name(l.lvt)
+func (l *LvObject) getName() *C.char {
+	return C.lvm_lv_get_name(l.Lvt)
 }
 
 // getUuid
-func (l *lvObject) getUuid() *C.char {
-	return C.lvm_lv_get_uuid(l.lvt)
+func (l *LvObject) GetUuid() *C.char {
+	return C.lvm_lv_get_uuid(l.Lvt)
 }
 
 // RemoveLV
-func (l *lvObject) RemoveLv() error {
+func (l *LvObject) RemoveLv() error {
 	// TODO return
-	C.lvm_vg_remove_lv(l.lvt)
+	C.lvm_vg_remove_lv(l.Lvt)
 	return nil
 }
 
 // addTag
-func (l *lvObject) addTag(stag string) error {
+func (l *LvObject) AddTag(stag string) error {
 	tag := C.CString(stag)
-	C.lvm_lv_add_tag(l.lvt, tag)
-	C.lvm_vg_write(l.parentVG.vgt)
+	C.lvm_lv_add_tag(l.Lvt, tag)
+	C.lvm_vg_write(l.parentVG.Vgt)
 	return nil
 }
 
 // removeTag
-func (l *lvObject) removeTag(stag string) error {
+func (l *LvObject) RemoveTag(stag string) error {
 	tag := C.CString(stag)
-	C.lvm_lv_remove_tag(l.lvt, tag)
-	C.lvm_vg_write(l.parentVG.vgt)
+	C.lvm_lv_remove_tag(l.Lvt, tag)
+	C.lvm_vg_write(l.parentVG.Vgt)
 	return nil
 }
 
@@ -219,12 +219,12 @@ type pvObject struct {
 }
 
 // getName
-func (p *pvObject) getName() *C.char {
+func (p *pvObject) GetName() *C.char {
 	return C.lvm_pv_get_name(p.pvt)
 }
 
 // getUuid
-func (p *pvObject) getUuid() *C.char {
+func (p *pvObject) GetUuid() *C.char {
 	return C.lvm_pv_get_uuid(p.pvt)
 }
 

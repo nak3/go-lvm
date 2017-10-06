@@ -2,12 +2,6 @@
 #include <lvm2app.h>
 #include <stdio.h>
 
-typedef char *names[];
-
-struct result {
-	char **namelist;
-};
-
 int wrapper_dm_list_iterate_items(struct dm_list *vgnames, char **r)
 {
 	struct lvm_str_list *strl;
@@ -21,7 +15,7 @@ int wrapper_dm_list_iterate_items(struct dm_list *vgnames, char **r)
 }
 
 // C helper functions:
-static char**makeCharArray(int size) {
+char**makeCharArray(int size) {
         return calloc(sizeof(char*), size);
 }
 
