@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//	"time"
 )
 
 func main() {
@@ -28,6 +29,8 @@ func main() {
 	fmt.Printf("LV UUID: %#v\n", l.getUuid())
 
 	l.addTag("Demo_tag")
+
+	//	time.Sleep(10 * time.Second) // 3秒休む
 	l.removeTag("Demo_tag")
 
 	l.RemoveLv()

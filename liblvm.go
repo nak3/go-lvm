@@ -195,6 +195,7 @@ func (l *lvObject) RemoveLv() error {
 	return nil
 }
 
+// addTag
 func (l *lvObject) addTag(stag string) error {
 	tag := C.CString(stag)
 	C.lvm_lv_add_tag(l.lvt, tag)
@@ -202,9 +203,32 @@ func (l *lvObject) addTag(stag string) error {
 	return nil
 }
 
+// removeTag
 func (l *lvObject) removeTag(stag string) error {
 	tag := C.CString(stag)
 	C.lvm_lv_remove_tag(l.lvt, tag)
 	C.lvm_vg_write(l.parentVG.vgt)
 	return nil
+}
+
+// ######################## pv methods #######################
+
+// pvObject
+type pvObject struct {
+	pvt C.pv_t
+}
+
+// getName
+func (p *pvObject) getName() *C.char {
+	return C.lvm_pv_get_name(p.pvt)
+}
+
+// getUuid
+func (p *pvObject) getUuid() *C.char {
+	return C.lvm_pv_get_uuid(p.pvt)
+}
+
+// getMdaCount
+func (p *pvObject) getMdaCount() C.uint64_t {
+	return C.lvm_pv_get_mda_count(p.pvt)
 }
