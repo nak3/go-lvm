@@ -1,0 +1,11 @@
+language: go
+go:
+  - 1.x
+os:
+  - linux
+sudo: required
+before_install:
+  - go get -u github.com/nak3/go-lvm
+script:
+  - go build -tags=gofuzz ./...
+  - go run cmd/example.go

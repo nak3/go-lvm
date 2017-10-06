@@ -64,11 +64,6 @@ func VgOpen(vgname string, mode string) C.vg_t {
 	return vg
 }
 
-type GoObject struct {
-	Vgt C.vg_t
-	Lvt C.lv_t
-}
-
 func GoStrings(argc C.int, argv **C.char) []string {
 	length := int(argc)
 	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(argv))[:length:length]
@@ -77,11 +72,6 @@ func GoStrings(argc C.int, argv **C.char) []string {
 		gostrings[i] = C.GoString(s)
 	}
 	return gostrings
-}
-
-// TODO: should be for Lvt
-func (g *GoObject) GetUuid() *C.char {
-	return C.lvm_lv_get_uuid(g.Lvt)
 }
 
 // VG methods
