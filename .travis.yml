@@ -3,14 +3,9 @@ go:
   - 1.x
 dist: trusty
 sudo: required
-addons:
-  apt:
-    packages:
-      - liblvm2-dev
-      - libdevmapper-dev
-before_install:
-  - sudo apt-get update
-  - go get -u github.com/nak3/go-lvm
-
+services:
+  - docker
+env:
+  - TARGET_CONTAINER_ID=container-go-lvm
 script:
-  - go run cmd/example.go
+  - docker build -t go-lvm .
