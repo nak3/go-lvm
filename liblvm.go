@@ -14,6 +14,33 @@ func init() {
 	libh = C.lvm_init(nil)
 }
 
+// ######################## LVM methods #######################
+
+// GetVersion returns library version
+func GetVersion() *C.char {
+	return C.lvm_library_get_version()
+}
+
+// LvmGC cleans up libh
+func LvmGC() {
+	C.lvm_quit(libh)
+	libh = nil
+}
+
+//VgOpen opens volume group
+func VgOpen(vgname string, mode string) C.vg_t {
+	if mode == "" {
+		mode = "r"
+	}
+	vg := C.lvm_vg_open(libh, C.CString(vgname), C.CString(mode), 0)
+	return vg
+}
+
+//VgCreate creates volume
+func VgCreate(vgname string) C.vg_t {
+	return C.lvm_vg_create(libh, C.CString(vgname))
+}
+
 // ListVgNames returns LVM name list
 func ListVgNames() []string {
 	vgnames := C.lvm_list_vg_names(libh)
@@ -23,9 +50,7 @@ func ListVgNames() []string {
 	}
 	cargs := C.makeCharArray(C.int(0))
 	n := C.wrapper_dm_list_iterate_items(vgnames, cargs)
-	gs := GoStrings(n, cargs)
-	//
-	fmt.Printf("vgnames: %#v\n", gs)
+	gs := goStrings(n, cargs)
 	return gs
 }
 
@@ -38,40 +63,24 @@ func ListVgUUIDs() []string {
 	}
 	cargs := C.makeCharArray(C.int(0))
 	n := C.wrapper_dm_list_iterate_items(uuids, cargs)
-	gs := GoStrings(n, cargs)
-	//
-	fmt.Printf("vgnames: %#v\n", gs)
+	gs := goStrings(n, cargs)
 	return gs
 }
 
-func LvmPvListGet() []string {
+// TOOD: static PyObject *_liblvm_lvm_pvlist_get(pvslistobject *pvsobj)
+// TODO: static PyObject *_liblvm_lvm_pvlist_put(pvslistobject *self)
+// TODO: static PyObject *_liblvm_pvlist_dealloc(pvslistobject *self)
+
+// ######################## pv list methods #######################
+// List pvs and get them as string array
+func PvListGet() []string {
 	pvsList := C.lvm_list_pvs(libh)
 	fmt.Printf("pvsList: %#v\n", pvsList)
 
 	cargs := C.makeCharArray(C.int(0))
 	n := C.wrapper_dm_list_iterate_items(pvsList, cargs)
-	gs := GoStrings(n, cargs)
-
-	fmt.Printf("(test)pvsList: %#v\n", gs)
+	gs := goStrings(n, cargs)
 	return gs
-}
-
-func VgOpen(vgname string, mode string) C.vg_t {
-	if mode == "" {
-		mode = "r"
-	}
-	vg := C.lvm_vg_open(libh, C.CString(vgname), C.CString(mode), 0)
-	return vg
-}
-
-func GoStrings(argc C.int, argv **C.char) []string {
-	length := int(argc)
-	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(argv))[:length:length]
-	gostrings := make([]string, length)
-	for i, s := range tmpslice {
-		gostrings[i] = C.GoString(s)
-	}
-	return gostrings
 }
 
 // VG methods
@@ -99,7 +108,7 @@ func (v *VgObject) PvList() []string {
 	}
 	cargs := C.makeCharArray(C.int(0))
 	n := C.wrapper_dm_list_iterate_items(pvs, cargs)
-	gs := GoStrings(n, cargs)
+	gs := goStrings(n, cargs)
 	fmt.Printf("(test)pvsList: %#v\n", gs)
 	return gs
 
@@ -118,7 +127,7 @@ func (v *VgObject) LvList() []string {
 	}
 	cargs := C.makeCharArray(C.int(0))
 	n := C.wrapper_dm_list_iterate_items(lvl, cargs)
-	gs := GoStrings(n, cargs)
+	gs := goStrings(n, cargs)
 	fmt.Printf("(test)lvList: %#v\n", gs)
 	return gs
 }
@@ -221,4 +230,15 @@ func (p *pvObject) GetUuid() *C.char {
 // getMdaCount
 func (p *pvObject) getMdaCount() C.uint64_t {
 	return C.lvm_pv_get_mda_count(p.pvt)
+}
+
+// ######################## utility methods #######################
+func goStrings(argc C.int, argv **C.char) []string {
+	length := int(argc)
+	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(argv))[:length:length]
+	gostrings := make([]string, length)
+	for i, s := range tmpslice {
+		gostrings[i] = C.GoString(s)
+	}
+	return gostrings
 }

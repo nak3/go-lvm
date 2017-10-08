@@ -8,7 +8,7 @@ import (
 func main() {
 	vglist := lvm.ListVgNames()
 	lvm.ListVgUUIDs()
-	lvm.LvmPvListGet()
+	lvm.PvListGet()
 	a := &lvm.VgObject{}
 	//a.vgt = LvmVgOpen(vglist[1], "r")
 	a.Vgt = lvm.VgOpen(vglist[1], "w")
