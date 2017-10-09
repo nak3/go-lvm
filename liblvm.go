@@ -343,30 +343,44 @@ func Open() []string {
 
 // ######################## pv methods #######################
 
-// pvObject
-type pvObject struct {
-	pvt C.pv_t
+// pvObject represents PV.
+type PvObject struct {
+	Pvt C.pv_t
 }
 
-// getName
-func (p *pvObject) GetName() string {
-	return C.GoString(C.lvm_pv_get_name(p.pvt))
+// GetName returns name of the PV.
+func (p *PvObject) GetName() string {
+	return C.GoString(C.lvm_pv_get_name(p.Pvt))
 }
 
-// getUuid
-func (p *pvObject) GetUuid() string {
-	return C.GoString(C.lvm_pv_get_uuid(p.pvt))
+// GetUuid returns UUID of the PV.
+func (p *PvObject) GetUuid() string {
+	return C.GoString(C.lvm_pv_get_uuid(p.Pvt))
 }
 
-// getMdaCount
-func (p *pvObject) getMdaCount() C.uint64_t {
-	return C.lvm_pv_get_mda_count(p.pvt)
+// GetMdaCount returns metadata count.
+func (p *PvObject) GetMdaCount() C.uint64_t {
+	return C.lvm_pv_get_mda_count(p.Pvt)
 }
 
 //        { "getProperty",        (PyCFunction)_liblvm_lvm_pv_get_property, METH_VARARGS },
 //        { "getSize",            (PyCFunction)_liblvm_lvm_pv_get_size, METH_NOARGS },
-//        { "getDevSize",         (PyCFunction)_liblvm_lvm_pv_get_dev_size, METH_NOARGS },
-//        { "getFree",            (PyCFunction)_liblvm_lvm_pv_get_free, METH_NOARGS },
+
+// GetSize returns size of PV.
+func (p *PvObject) GetSize() C.uint64_t {
+	return C.lvm_pv_get_size(p.Pvt)
+}
+
+// GetDevSize returns free size of PV.
+func (p *PvObject) GetDevSize() C.uint64_t {
+	return C.lvm_pv_get_size(p.Pvt)
+}
+
+// GetFreeSize returns free size of PV.
+func (p *PvObject) GetFreeSize() C.uint64_t {
+	return C.lvm_pv_get_free(p.Pvt)
+}
+
 //        { "resize",             (PyCFunction)_liblvm_lvm_pv_resize, METH_VARARGS },
 //        { "listPVsegs",         (PyCFunction)_liblvm_lvm_pv_list_pvsegs, METH_NOARGS },
 
