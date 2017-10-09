@@ -3,3 +3,4 @@ example
 *.swo
 tmp-ref*
 test.go
+testrun

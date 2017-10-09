@@ -6,6 +6,6 @@ go-lvm
 
 ### Overview
 
-go-lvm calls liblvm API and manipulate LVM. go-lvm is a library based on python-lvm developed in [LVM2](https://sourceware.org/lvm2/).
+go-lvm is a go library to call liblvm API based on python-lvm developed in [LVM2](https://sourceware.org/lvm2/).
 
 ### Usage

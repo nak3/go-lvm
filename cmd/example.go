@@ -6,18 +6,21 @@ import (
 )
 
 func main() {
+	valid := lvm.VgNameValidate("fedora")
+	fmt.Printf("%#v\n", valid)
+
 	vglist := lvm.ListVgNames()
 	lvm.ListVgUUIDs()
-	lvm.PvListGet()
+	lvm.Open()
 	a := &lvm.VgObject{}
 	//a.vgt = LvmVgOpen(vglist[1], "r")
 	a.Vgt = lvm.VgOpen(vglist[1], "w")
 
 	fmt.Printf("size: %d GiB\n", uint64(a.GetSize())/1024/1024/1024)
 
-	fmt.Printf("pvlist: %#v\n", a.PvList())
+	fmt.Printf("pvlist: %#v\n", a.ListPVs())
 
-	fmt.Printf("listLVs: %#v\n", a.LvList())
+	fmt.Printf("listLVs: %#v\n", a.ListLVs())
 
 	// TODO /1024
 	fmt.Printf("Free size: %d KiB\n", uint64(a.GetFreeSize())/1024/1024)
@@ -33,6 +36,6 @@ func main() {
 	//	time.Sleep(10 * time.Second) // 3秒休む
 	l.RemoveTag("Demo_tag")
 
-	l.RemoveLv()
+	l.Remove()
 
 }
