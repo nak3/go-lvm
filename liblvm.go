@@ -145,8 +145,8 @@ type VgObject struct {
 }
 
 // GetName gets name of VG
-func (v *VgObject) GetName() *C.char {
-	return C.lvm_vg_get_name(v.Vgt)
+func (v *VgObject) GetName() string {
+	return C.GoString(C.lvm_vg_get_name(v.Vgt))
 }
 
 // GetUuid gets UUID of VG
@@ -269,25 +269,24 @@ type LvObject struct {
 	parentVG *VgObject
 }
 
-// LV methods
 // GetAttr gets LV attr
-func (l *LvObject) GetAttr() *C.char {
-	return C.lvm_lv_get_attr(l.Lvt)
+func (l *LvObject) GetAttr() string {
+	return C.GoString(C.lvm_lv_get_attr(l.Lvt))
 }
 
 // GetName gets LV name
-func (l *LvObject) getName() *C.char {
-	return C.lvm_lv_get_name(l.Lvt)
+func (l *LvObject) GetName() string {
+	return C.GoString(C.lvm_lv_get_name(l.Lvt))
 }
 
 // GetOrigin gets LV origin
-func (l *LvObject) GetOrigin() *C.char {
-	return C.lvm_lv_get_origin(l.Lvt)
+func (l *LvObject) GetOrigin() string {
+	return C.GoString(C.lvm_lv_get_origin(l.Lvt))
 }
 
 // GetUuid gets LV uuid
-func (l *LvObject) GetUuid() *C.char {
-	return C.lvm_lv_get_uuid(l.Lvt)
+func (l *LvObject) GetUuid() string {
+	return C.GoString(C.lvm_lv_get_uuid(l.Lvt))
 }
 
 //        { "activate",           (PyCFunction)_liblvm_lvm_lv_activate, METH_NOARGS },
@@ -350,13 +349,13 @@ type pvObject struct {
 }
 
 // getName
-func (p *pvObject) GetName() *C.char {
-	return C.lvm_pv_get_name(p.pvt)
+func (p *pvObject) GetName() string {
+	return C.GoString(C.lvm_pv_get_name(p.pvt))
 }
 
 // getUuid
-func (p *pvObject) GetUuid() *C.char {
-	return C.lvm_pv_get_uuid(p.pvt)
+func (p *pvObject) GetUuid() string {
+	return C.GoString(C.lvm_pv_get_uuid(p.pvt))
 }
 
 // getMdaCount

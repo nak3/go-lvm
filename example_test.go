@@ -1,14 +1,17 @@
-package main
+package lvm_test
 
 import (
 	"fmt"
+
 	"github.com/nak3/go-lvm"
 )
 
-func main() {
+// This example demonstrates creating and removing a Logical Volume(LV).
+func ExampleLvObject_createremove() {
 	// List volume group
 	vglist := lvm.ListVgNames()
 	availableVG := ""
+
 	// Create a VG object
 	vgo := &lvm.VgObject{}
 	for i := 0; i < len(vglist); i++ {
@@ -29,11 +32,6 @@ func main() {
 	vgo.Vgt = lvm.VgOpen(availableVG, "w")
 	defer vgo.Close()
 
-	// Output some data of the VG
-	fmt.Printf("size: %d GiB\n", uint64(vgo.GetSize())/1024/1024/1024)
-	fmt.Printf("pvlist: %v\n", vgo.ListPVs())
-	fmt.Printf("Free size: %d KiB\n", uint64(vgo.GetFreeSize())/1024/1024)
-
 	// Create a LV object
 	l := &lvm.LvObject{}
 
@@ -43,7 +41,14 @@ func main() {
 	// Output uuid of LV
 	fmt.Printf("Created\n\tuuid: %s\n\tname: %s\n\tattr: %s\n\torigin: %s\n",
 		l.GetUuid(), l.GetName(), l.GetAttr(), l.GetOrigin())
-
 	// Output uuid of LV
 	l.Remove()
+
+	/*
+	   Created
+	   	uuid: cn631J-J2GR-DL0l-3G38-MfGm-8ypc-iHskGI
+	   	name: go-lvm-example-test-lv
+	   	attr: -wi-a-----
+	   	origin:
+	*/
 }
