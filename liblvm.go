@@ -98,18 +98,18 @@ func PvCreate(pv_name string, size uint64, pvmetadatacopies uint64, pvmetadatasi
 	return nil
 }
 
-// PvRemove removes PV
+// PvRemove removes PV.
 func PvRemove(pv_name string) {
 	C.lvm_pv_remove(libh, C.CString(pv_name))
 }
 
-// PercentToFloat converts percent to float
+// PercentToFloat converts percent to float.
 func PercentToFloat(percent C.percent_t) C.float {
 	// TODO C.percent_t should be golang type.
 	return C.lvm_percent_to_float(percent)
 }
 
-// VgNameValidate validates if the vg name is valid
+// VgNameValidate validates if the vg name is valid.
 func VgNameValidate(name string) error {
 	ret := C.lvm_vg_name_validate(libh, C.CString(name))
 	if ret < 0 {
@@ -118,7 +118,7 @@ func VgNameValidate(name string) error {
 	return nil
 }
 
-// VgNameFromPvID returns VG name from PVID
+// VgNameFromPvID returns VG name from PVID.
 func VgNameFromPvID(pvid string) *C.char {
 	ret := C.lvm_vgname_from_pvid(libh, C.CString(pvid))
 	// TODO
@@ -127,34 +127,34 @@ func VgNameFromPvID(pvid string) *C.char {
 	return ret
 }
 
-// VgNameFromPvDevice returns VG name from PV device
+// VgNameFromPvDevice returns VG name from PV device.
 func VgNameFromPvDevice(pvdevice string) string {
-	//func VgNameFromPvDevice(pvdevice string) *C.char {
 	ret := C.lvm_vgname_from_device(libh, C.CString(pvdevice))
-	// TODO
-	msg := C.lvm_errmsg(libh)
-	fmt.Printf("msg : %#v\n", C.GoString(msg))
+	if ret == nil {
+		// TODO
+		//		return getLastError()
+	}
 	return C.GoString(ret)
 }
 
 // ######################## vg methods #######################
 
-// VgObject is an object of VG
+// VgObject is an object of VG.
 type VgObject struct {
 	Vgt C.vg_t
 }
 
-// GetName gets name of VG
+// GetName gets name of VG.
 func (v *VgObject) GetName() string {
 	return C.GoString(C.lvm_vg_get_name(v.Vgt))
 }
 
-// GetUuid gets UUID of VG
+// GetUuid gets UUID of VG.
 func (v *VgObject) GetUuid() *C.char {
 	return C.lvm_vg_get_uuid(v.Vgt)
 }
 
-// Close closes VG object
+// Close closes VG object.
 func (v *VgObject) Close() error {
 	if C.lvm_vg_close(v.Vgt) == -1 {
 		return getLastError()
@@ -162,7 +162,7 @@ func (v *VgObject) Close() error {
 	return nil
 }
 
-// Remove removes VG
+// Remove removes VG.
 func (v *VgObject) Remove() error {
 	if C.lvm_vg_remove(v.Vgt) == -1 {
 		return getLastError()
@@ -175,13 +175,61 @@ func (v *VgObject) Remove() error {
 
 //        { "extend",             (PyCFunction)_liblvm_lvm_vg_extend, METH_VARARGS },
 //        { "reduce",             (PyCFunction)_liblvm_lvm_vg_reduce, METH_VARARGS },
-//        { "addTag",             (PyCFunction)_liblvm_lvm_vg_add_tag, METH_VARARGS },
-//        { "removeTag",          (PyCFunction)_liblvm_lvm_vg_remove_tag, METH_VARARGS },
+
+// AddTag adds tag to VG.
+func (v *VgObject) AddTag(stag string) error {
+	tag := C.CString(stag)
+	if C.lvm_vg_add_tag(v.Vgt, tag) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(v.Vgt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
+// RemoveTag removes tag from VG.
+func (v *VgObject) RemoveTag(stag string) error {
+	tag := C.CString(stag)
+	if C.lvm_vg_remove_tag(v.Vgt, tag) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(v.Vgt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
 //        { "setExtentSize",      (PyCFunction)_liblvm_lvm_vg_set_extent_size, METH_VARARGS },
-//        { "isClustered",        (PyCFunction)_liblvm_lvm_vg_is_clustered, METH_NOARGS },
-//        { "isExported",         (PyCFunction)_liblvm_lvm_vg_is_exported, METH_NOARGS },
-//        { "isPartial",          (PyCFunction)_liblvm_lvm_vg_is_partial, METH_NOARGS },
-//        { "getSeqno",           (PyCFunction)_liblvm_lvm_vg_get_seqno, METH_NOARGS },
+
+// IsClustered checks clustered or not.
+func (v *VgObject) IsClustered() bool {
+	if C.lvm_vg_is_clustered(v.Vgt) == 1 {
+		return true
+	}
+	return false
+}
+
+// IsExported checks exported or not.
+func (v *VgObject) IsExported() bool {
+	if C.lvm_vg_is_exported(v.Vgt) == 1 {
+		return true
+	}
+	return false
+}
+
+// IsPartial checks partial or not.
+func (v *VgObject) IsPartial() bool {
+	if C.lvm_vg_is_partial(v.Vgt) == 1 {
+		return true
+	}
+	return false
+}
+
+// GetSeqno returns sequence number of VG.
+func (v *VgObject) GetSeqno() C.uint64_t {
+	return C.lvm_vg_get_seqno(v.Vgt)
+}
 
 // GetSize returns size of VG
 func (v *VgObject) GetSize() C.uint64_t {
@@ -193,14 +241,38 @@ func (v *VgObject) GetFreeSize() C.uint64_t {
 	return C.lvm_vg_get_free_size(v.Vgt)
 }
 
-//        { "getExtentSize",      (PyCFunction)_liblvm_lvm_vg_get_extent_size, METH_NOARGS },
-//        { "getExtentCount",     (PyCFunction)_liblvm_lvm_vg_get_extent_count, METH_NOARGS },
-//        { "getFreeExtentCount", (PyCFunction)_liblvm_lvm_vg_get_free_extent_count, METH_NOARGS },
+// GetExtentSize returns extent size of VG.
+func (v *VgObject) GetExtentSize() C.uint64_t {
+	return C.lvm_vg_get_extent_size(v.Vgt)
+}
+
+// GetExtentCount returns extent count of VG.
+func (v *VgObject) GetExtentCount() C.uint64_t {
+	return C.lvm_vg_get_extent_count(v.Vgt)
+}
+
+// GetFreeExtentCount returns free extent count of VG.
+func (v *VgObject) GetFreeExtentCount() C.uint64_t {
+	return C.lvm_vg_get_free_extent_count(v.Vgt)
+}
+
 //        { "getProperty",        (PyCFunction)_liblvm_lvm_vg_get_property, METH_VARARGS },
 //        { "setProperty",        (PyCFunction)_liblvm_lvm_vg_set_property, METH_VARARGS },
-//        { "getPvCount",         (PyCFunction)_liblvm_lvm_vg_get_pv_count, METH_NOARGS },
-//        { "getMaxPv",           (PyCFunction)_liblvm_lvm_vg_get_max_pv, METH_NOARGS },
-//        { "getMaxLv",           (PyCFunction)_liblvm_lvm_vg_get_max_lv, METH_NOARGS },
+
+// GePvCount returns the number of PV.
+func (v *VgObject) GetPvCont() C.uint64_t {
+	return C.lvm_vg_get_pv_count(v.Vgt)
+}
+
+// GetMaxPv returns maximum value of PV.
+func (v *VgObject) GetMaxPv() C.uint64_t {
+	return C.lvm_vg_get_max_pv(v.Vgt)
+}
+
+// GetMaxPv returns maximum value of LV.
+func (v *VgObject) GetMaxLV() C.uint64_t {
+	return C.lvm_vg_get_max_lv(v.Vgt)
+}
 
 // ListLVs lists of lvs from VG
 func (v *VgObject) ListLVs() []string {
@@ -244,18 +316,15 @@ func createGoLv(v *VgObject, lv C.lv_t) *LvObject {
 }
 
 // CreateLvLinear creates LV Object
-func (v *VgObject) CreateLvLinear(n string, s int64) *LvObject {
-	//func (v *VgObject) CreateLvLinear(n string, s int64) *C.struct_logical_volume {
+func (v *VgObject) CreateLvLinear(n string, s int64) (*LvObject, error) {
 	size := C.uint64_t(s)
 	name := C.CString(n)
 
 	lv := C.lvm_vg_create_lv_linear(v.Vgt, name, size)
 	if lv == nil {
-		fmt.Printf("nil")
+		return nil, getLastError()
 	}
-	return createGoLv(v, lv)
-	//	return &LvObject{Lvt: lv}
-	//	return lv
+	return createGoLv(v, lv), nil
 }
 
 //        { "createLvThinpool",   (PyCFunction)_liblvm_lvm_vg_create_lv_thinpool, METH_VARARGS },
@@ -289,34 +358,74 @@ func (l *LvObject) GetUuid() string {
 	return C.GoString(C.lvm_lv_get_uuid(l.Lvt))
 }
 
-//        { "activate",           (PyCFunction)_liblvm_lvm_lv_activate, METH_NOARGS },
-//        { "deactivate",         (PyCFunction)_liblvm_lvm_lv_deactivate, METH_NOARGS },
+// Activate activates LV.
+func (l *LvObject) Activate() error {
+	if C.lvm_lv_activate(l.Lvt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
 
-// Remove removes LV
+// Deactivate deactivates LV.
+func (l *LvObject) Deactivate() error {
+	if C.lvm_lv_deactivate(l.Lvt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
+// Remove removes LV.
 func (l *LvObject) Remove() error {
-	// TODO return
-	C.lvm_vg_remove_lv(l.Lvt)
+	if C.lvm_vg_remove_lv(l.Lvt) == -1 {
+		return getLastError()
+	}
 	return nil
 }
 
 //        { "getProperty",        (PyCFunction)_liblvm_lvm_lv_get_property, METH_VARARGS },
-//        { "getSize",            (PyCFunction)_liblvm_lvm_lv_get_size, METH_NOARGS },
-//        { "isActive",           (PyCFunction)_liblvm_lvm_lv_is_active, METH_NOARGS },
-//        { "isSuspended",        (PyCFunction)_liblvm_lvm_lv_is_suspended, METH_NOARGS },
 
-// AddTag adds tag to LV
+// GetSize returns size of LV.
+func (l *LvObject) GetSize() C.uint64_t {
+	return C.lvm_lv_get_size(l.Lvt)
+}
+
+// IsActive checks active LV or not.
+func (l *LvObject) IsActive() bool {
+	if C.lvm_lv_is_active(l.Lvt) == 1 {
+		return true
+	}
+	return false
+}
+
+// IsSuspended checks suspended LV or not.
+func (l *LvObject) IsSuspended() bool {
+	if C.lvm_lv_is_suspended(l.Lvt) == 1 {
+		return true
+	}
+	return false
+}
+
+// AddTag adds tag to LV.
 func (l *LvObject) AddTag(stag string) error {
 	tag := C.CString(stag)
-	C.lvm_lv_add_tag(l.Lvt, tag)
-	C.lvm_vg_write(l.parentVG.Vgt)
+	if C.lvm_lv_add_tag(l.Lvt, tag) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(l.parentVG.Vgt) == -1 {
+		return getLastError()
+	}
 	return nil
 }
 
-// RemoveTag removes tag from LV
+// RemoveTag removes tag from LV.
 func (l *LvObject) RemoveTag(stag string) error {
 	tag := C.CString(stag)
-	C.lvm_lv_remove_tag(l.Lvt, tag)
-	C.lvm_vg_write(l.parentVG.Vgt)
+	if C.lvm_lv_remove_tag(l.Lvt, tag) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(l.parentVG.Vgt) == -1 {
+		return getLastError()
+	}
 	return nil
 }
 
@@ -328,7 +437,7 @@ func (l *LvObject) RemoveTag(stag string) error {
 
 // ######################## pv list methods #######################
 
-// Open lists PVs and get them as string array
+// Open lists PVs and get them as string array.
 func Open() []string {
 	pvsList := C.lvm_list_pvs(libh)
 	fmt.Printf("pvsList: %#v\n", pvsList)
@@ -364,7 +473,6 @@ func (p *PvObject) GetMdaCount() C.uint64_t {
 }
 
 //        { "getProperty",        (PyCFunction)_liblvm_lvm_pv_get_property, METH_VARARGS },
-//        { "getSize",            (PyCFunction)_liblvm_lvm_pv_get_size, METH_NOARGS },
 
 // GetSize returns size of PV.
 func (p *PvObject) GetSize() C.uint64_t {

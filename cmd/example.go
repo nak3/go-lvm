@@ -38,7 +38,11 @@ func main() {
 	l := &lvm.LvObject{}
 
 	// Create a LV
-	l = vgo.CreateLvLinear("go-lvm-example-test-lv", int64(vgo.GetFreeSize())/1024/1024/2)
+	l, err := vgo.CreateLvLinear("go-lvm-example-test-lv", int64(vgo.GetFreeSize())/1024/1024/2)
+	if err != nil {
+		fmt.Printf("error: %v")
+		return
+	}
 
 	// Output uuid of LV
 	fmt.Printf("Created\n\tuuid: %s\n\tname: %s\n\tattr: %s\n\torigin: %s\n",
