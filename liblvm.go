@@ -382,7 +382,37 @@ func (l *LvObject) Remove() error {
 	return nil
 }
 
+/*
+type prop struct {
+	cprop C.lvm_property_value_t
+}
+*/
+
+func get_property(prop *C.struct_lvm_property_value) ([]string, error) {
+	//	l := int(0)
+	//	s := (*[1 << 30]C.struct_lvm_property_value_t)(unsafe.Pointer(prop))[:l:l]
+	is_valid := C.getN(unsafe.Pointer(prop))
+	if is_valid == 0 {
+		return nil, getLastError()
+	}
+
+	//func get_property(p prop) {
+	//	s[0].is_valid = 10
+	//if !s[0].is_valid {
+
+	//}
+	return []string{"TODO"}, nil
+}
+
 //        { "getProperty",        (PyCFunction)_liblvm_lvm_lv_get_property, METH_VARARGS },
+
+// GetProperty returns properties of LV.
+func (l *LvObject) GetProperty(name string) ([]string, error) {
+	prop_value := C.lvm_lv_get_property(l.Lvt, C.CString(name))
+	//	a := &prop{cprop: prop_value}
+	//return get_property(a)
+	return get_property(&prop_value)
+}
 
 // GetSize returns size of LV.
 func (l *LvObject) GetSize() C.uint64_t {
@@ -494,6 +524,7 @@ func (p *PvObject) GetFreeSize() C.uint64_t {
 
 // ######################## utility methods #######################
 func goStrings(argc C.int, argv **C.char) []string {
+	// TODO nConstraint
 	length := int(argc)
 	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(argv))[:length:length]
 	gostrings := make([]string, length)

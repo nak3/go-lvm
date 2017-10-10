@@ -57,3 +57,8 @@ static void freeCharArray(char **a, int size) {
 }
 */
 
+
+int getN(void* p) {
+	lvm_property_value_t t = *(lvm_property_value_t *)p;
+	return t.is_valid;
+}

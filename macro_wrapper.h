@@ -13,3 +13,5 @@ void wrapper_set_pv_prop(pv_create_params_t params, char *name, long long value)
 
 char**makeCharArray(int size);
 
+int getN(void* p);
+
