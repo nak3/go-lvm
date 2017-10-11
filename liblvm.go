@@ -41,9 +41,33 @@ func VgCreate(vgname string) C.vg_t {
 	return C.lvm_vg_create(libh, C.CString(vgname))
 }
 
-//        { "configFindBool",     (PyCFunction)_liblvm_lvm_config_find_bool, METH_VARARGS },
-//        { "configReload",       (PyCFunction)_liblvm_lvm_config_reload, METH_NOARGS },
-//        { "configOverride",     (PyCFunction)_liblvm_lvm_config_override, METH_VARARGS },
+// ConfigFind checks if config could be found or not.
+func ConfigFind(config string) (bool, error) {
+	rval := C.lvm_config_find_bool(libh, C.CString(config), -10)
+	if rval == -10 {
+		return false, fmt.Errorf("config path not found")
+	}
+	if C.int(rval) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// ConfigReload reloads config.
+func ConfigReload(config string) error {
+	if C.lvm_config_reload(libh) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
+// ConfigOverride overrides config.
+func ConfigOverride(config string) error {
+	if C.lvm_config_override(libh, C.CString(config)) == -1 {
+		return getLastError()
+	}
+	return nil
+}
 
 // Scan scans libh
 func Scan() {
