@@ -332,9 +332,25 @@ func (v *VgObject) ListPVs() []string {
 
 //        { "lvFromName",         (PyCFunction)_liblvm_lvm_lv_from_name, METH_VARARGS },
 //        { "lvFromUuid",         (PyCFunction)_liblvm_lvm_lv_from_uuid, METH_VARARGS },
-//        { "lvNameValidate",     (PyCFunction)_liblvm_lvm_lv_name_validate, METH_VARARGS },
+
+// LvNameValidate validates if the lv name is valid inside VG.
+func (v *VgObject) LvNameValidate(name string) error {
+	ret := C.lvm_lv_name_validate(v.Vgt, C.CString(name))
+	if ret < 0 {
+		return getLastError()
+	}
+	return nil
+}
+
 //        { "pvFromName",         (PyCFunction)_liblvm_lvm_pv_from_name, METH_VARARGS },
+// PvFromName returns PV object from VGName
+func (v *VgObject) PvFromName() {
+}
+
 //        { "pvFromUuid",         (PyCFunction)_liblvm_lvm_pv_from_uuid, METH_VARARGS },
+// PvFromUuid returns PV object from uuid.
+func (v *VgObject) PvFromUuid() {
+}
 
 // GetTags returns tag list of LV.
 func (v *VgObject) GetTags() []string {
@@ -375,7 +391,7 @@ func (v *VgObject) CreateLvLinear(n string, s int64) (*LvObject, error) {
 
 // ######################################## LV methods ###################################
 
-// LV object
+// LvObject represents LV.
 type LvObject struct {
 	Lvt      C.lv_t
 	parentVG *VgObject
@@ -516,10 +532,37 @@ func (l *LvObject) GetTags() []string {
 	return gs
 }
 
-//        { "rename",             (PyCFunction)_liblvm_lvm_lv_rename, METH_VARARGS },
-//        { "resize",             (PyCFunction)_liblvm_lvm_lv_resize, METH_VARARGS },
+// Rename rename the name of LV.
+func (l *LvObject) Rename(name string) error {
+	if C.lvm_lv_rename(l.Lvt, C.CString(name)) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
+// Resize resizes the size of LV.
+func (l *LvObject) Resize(size uint64) error {
+	if C.lvm_lv_resize(l.Lvt, C.uint64_t(size)) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
 //        { "listLVsegs",         (PyCFunction)_liblvm_lvm_lv_list_lvsegs, METH_NOARGS },
-//        { "snapshot",           (PyCFunction)_liblvm_lvm_lv_snapshot, METH_VARARGS },
+
+// Snapshot creates a LV snapshot.
+func (l *LvObject) Snapshot(snapname string, size uint64) (*LvObject, error) {
+
+	lvp := C.lvm_lv_params_create_snapshot(l.Lvt, C.CString(snapname), C.uint64_t(size))
+	if lvp == nil {
+		return nil, getLastError()
+	}
+	lv := C.lvm_lv_create(lvp)
+	if lv == nil {
+		return nil, getLastError()
+	}
+	return createGoLv(l.parentVG, lv), nil
+}
 
 // ######################## pv list methods #######################
 
@@ -534,7 +577,13 @@ func Open() []string {
 	return gs
 }
 
-//        { "close",              (PyCFunction)_liblvm_lvm_pvlist_put, METH_VARARGS },
+// Close frees list of PVs.
+func Close(pvs []string) {
+	// TODO
+	if len(pvs) > 0 {
+		//C.lvm_list_pvs_free(pvs)
+	}
+}
 
 // ######################## pv methods #######################
 
@@ -579,7 +628,14 @@ func (p *PvObject) GetFreeSize() C.uint64_t {
 	return C.lvm_pv_get_free(p.Pvt)
 }
 
-//        { "resize",             (PyCFunction)_liblvm_lvm_pv_resize, METH_VARARGS },
+// Resize resizes the size of PV.
+func (p *PvObject) Resize(size uint64) error {
+	if C.lvm_pv_resize(p.Pvt, C.uint64_t(size)) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
 //        { "listPVsegs",         (PyCFunction)_liblvm_lvm_pv_list_pvsegs, METH_NOARGS },
 
 // ######################## utility methods #######################
