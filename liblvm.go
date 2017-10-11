@@ -256,7 +256,12 @@ func (v *VgObject) GetFreeExtentCount() C.uint64_t {
 	return C.lvm_vg_get_free_extent_count(v.Vgt)
 }
 
-//        { "getProperty",        (PyCFunction)_liblvm_lvm_vg_get_property, METH_VARARGS },
+// GetProperty returns properties of VG.
+func (v *VgObject) GetProperty(name string) (properties, error) {
+	prop_value := C.lvm_vg_get_property(v.Vgt, C.CString(name))
+	return get_property(&prop_value)
+}
+
 //        { "setProperty",        (PyCFunction)_liblvm_lvm_vg_set_property, METH_VARARGS },
 
 // GePvCount returns the number of PV.
@@ -305,7 +310,20 @@ func (v *VgObject) ListPVs() []string {
 //        { "lvNameValidate",     (PyCFunction)_liblvm_lvm_lv_name_validate, METH_VARARGS },
 //        { "pvFromName",         (PyCFunction)_liblvm_lvm_pv_from_name, METH_VARARGS },
 //        { "pvFromUuid",         (PyCFunction)_liblvm_lvm_pv_from_uuid, METH_VARARGS },
-//        { "getTags",            (PyCFunction)_liblvm_lvm_vg_get_tags, METH_NOARGS },
+
+// GetTags returns tag list of LV.
+func (v *VgObject) GetTags() []string {
+	tagsl := C.lvm_vg_get_tags(v.Vgt)
+	// TODO: should check error?
+	if tagsl == nil {
+		return []string{""}
+	}
+	// TODO?:  dm_list_size(vgnames?)
+	cargs := C.makeCharArray(C.int(0))
+	n := C.wrapper_dm_list_iterate_items(tagsl, cargs)
+	gs := goStrings(n, cargs)
+	return gs
+}
 
 // createGoLv creats a LV Object
 func createGoLv(v *VgObject, lv C.lv_t) *LvObject {
@@ -382,35 +400,35 @@ func (l *LvObject) Remove() error {
 	return nil
 }
 
-/*
-type prop struct {
-	cprop C.lvm_property_value_t
+// properties represents variety of properties.
+type properties struct {
+	signed_integer int
+	integer        int
+	str            string
 }
-*/
 
-func get_property(prop *C.struct_lvm_property_value) ([]string, error) {
-	//	l := int(0)
-	//	s := (*[1 << 30]C.struct_lvm_property_value_t)(unsafe.Pointer(prop))[:l:l]
-	is_valid := C.getN(unsafe.Pointer(prop))
-	if is_valid == 0 {
-		return nil, getLastError()
+// get_property returns properties.
+func get_property(prop *C.struct_lvm_property_value) (properties, error) {
+	var p properties
+	if C.is_valid(unsafe.Pointer(prop)) == 0 {
+		return p, getLastError()
 	}
 
-	//func get_property(p prop) {
-	//	s[0].is_valid = 10
-	//if !s[0].is_valid {
-
-	//}
-	return []string{"TODO"}, nil
+	if C.is_integer(unsafe.Pointer(prop)) != 0 {
+		if C.is_signed(unsafe.Pointer(prop)) != 0 {
+			// TODO
+		} else {
+			// TODO
+		}
+	} else {
+		// TODO
+	}
+	return p, nil
 }
 
-//        { "getProperty",        (PyCFunction)_liblvm_lvm_lv_get_property, METH_VARARGS },
-
 // GetProperty returns properties of LV.
-func (l *LvObject) GetProperty(name string) ([]string, error) {
+func (l *LvObject) GetProperty(name string) (properties, error) {
 	prop_value := C.lvm_lv_get_property(l.Lvt, C.CString(name))
-	//	a := &prop{cprop: prop_value}
-	//return get_property(a)
 	return get_property(&prop_value)
 }
 
@@ -459,7 +477,20 @@ func (l *LvObject) RemoveTag(stag string) error {
 	return nil
 }
 
-//        { "getTags",            (PyCFunction)_liblvm_lvm_lv_get_tags, METH_NOARGS },
+// GetTags returns tag list of LV.
+func (l *LvObject) GetTags() []string {
+	tagsl := C.lvm_lv_get_tags(l.Lvt)
+	// TODO: should check error?
+	if tagsl == nil {
+		return []string{""}
+	}
+	// TODO?:  dm_list_size(vgnames?)
+	cargs := C.makeCharArray(C.int(0))
+	n := C.wrapper_dm_list_iterate_items(tagsl, cargs)
+	gs := goStrings(n, cargs)
+	return gs
+}
+
 //        { "rename",             (PyCFunction)_liblvm_lvm_lv_rename, METH_VARARGS },
 //        { "resize",             (PyCFunction)_liblvm_lvm_lv_resize, METH_VARARGS },
 //        { "listLVsegs",         (PyCFunction)_liblvm_lvm_lv_list_lvsegs, METH_NOARGS },
@@ -502,7 +533,11 @@ func (p *PvObject) GetMdaCount() C.uint64_t {
 	return C.lvm_pv_get_mda_count(p.Pvt)
 }
 
-//        { "getProperty",        (PyCFunction)_liblvm_lvm_pv_get_property, METH_VARARGS },
+// GetProperty returns properties of PV.
+func (p *PvObject) GetProperty(name string) (properties, error) {
+	prop_value := C.lvm_pv_get_property(p.Pvt, C.CString(name))
+	return get_property(&prop_value)
+}
 
 // GetSize returns size of PV.
 func (p *PvObject) GetSize() C.uint64_t {
