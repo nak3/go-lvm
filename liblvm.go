@@ -330,8 +330,34 @@ func (v *VgObject) ListPVs() []string {
 	return gs
 }
 
-//        { "lvFromName",         (PyCFunction)_liblvm_lvm_lv_from_name, METH_VARARGS },
-//        { "lvFromUuid",         (PyCFunction)_liblvm_lvm_lv_from_uuid, METH_VARARGS },
+// pv_from_N returns PV.
+func lv_from_N(vg *C.struct_volume_group, id *C.char, pvg *VgObject, f func(*C.struct_volume_group, *C.char) C.lv_t) (*LvObject, error) {
+	lv := f(vg, id)
+	if lv == nil {
+		return nil, getLastError()
+	}
+	return &LvObject{
+		Lvt:      lv,
+		parentVG: pvg,
+	}, nil
+}
+
+// TODO: test
+// LvFromName returns LV object from name of VG.
+func (v *VgObject) LvFromName(sname string) (*LvObject, error) {
+	name := C.CString(sname)
+	return lv_from_N(v.Vgt, name, v, func(vg *C.struct_volume_group, id *C.char) C.lv_t {
+		return C.lvm_lv_from_name(vg, name)
+	})
+}
+
+// LvFromUuid returns LV object from UUID of VG.
+func (v *VgObject) LvFromUuid(suuid string) (*LvObject, error) {
+	uuid := C.CString(suuid)
+	return lv_from_N(v.Vgt, uuid, v, func(vg *C.struct_volume_group, id *C.char) C.lv_t {
+		return C.lvm_lv_from_uuid(vg, uuid)
+	})
+}
 
 // LvNameValidate validates if the lv name is valid inside VG.
 func (v *VgObject) LvNameValidate(name string) error {
@@ -342,14 +368,30 @@ func (v *VgObject) LvNameValidate(name string) error {
 	return nil
 }
 
-//        { "pvFromName",         (PyCFunction)_liblvm_lvm_pv_from_name, METH_VARARGS },
-// PvFromName returns PV object from VGName
-func (v *VgObject) PvFromName() {
+// pv_from_N returns PV.
+func pv_from_N(vg *C.struct_volume_group, id *C.char, f func(*C.struct_volume_group, *C.char) C.pv_t) (*PvObject, error) {
+	pv := f(vg, id)
+	if pv == nil {
+		return nil, getLastError()
+	}
+	return &PvObject{pv}, nil
 }
 
-//        { "pvFromUuid",         (PyCFunction)_liblvm_lvm_pv_from_uuid, METH_VARARGS },
+// TODO: test
+// PvFromName returns PV object from VGName
+func (v *VgObject) PvFromName(sname string) (*PvObject, error) {
+	name := C.CString(sname)
+	return pv_from_N(v.Vgt, name, func(vg *C.struct_volume_group, id *C.char) C.pv_t {
+		return C.lvm_pv_from_name(vg, name)
+	})
+}
+
 // PvFromUuid returns PV object from uuid.
-func (v *VgObject) PvFromUuid() {
+func (v *VgObject) PvFromUuid(sid string) (*PvObject, error) {
+	id := C.CString(sid)
+	return pv_from_N(v.Vgt, id, func(vg *C.struct_volume_group, id *C.char) C.pv_t {
+		return C.lvm_pv_from_uuid(vg, id)
+	})
 }
 
 // GetTags returns tag list of LV.
