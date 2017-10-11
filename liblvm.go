@@ -173,8 +173,27 @@ func (v *VgObject) Remove() error {
 	return v.Close()
 }
 
-//        { "extend",             (PyCFunction)_liblvm_lvm_vg_extend, METH_VARARGS },
-//        { "reduce",             (PyCFunction)_liblvm_lvm_vg_reduce, METH_VARARGS },
+// Extend extends PV by adding vg.
+func (v *VgObject) Extend(device string) error {
+	if C.lvm_vg_extend(v.Vgt, C.CString(device)) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(v.Vgt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
+
+// Reduce reduces VG from PV.
+func (v *VgObject) Reduce(device string) error {
+	if C.lvm_vg_reduce(v.Vgt, C.CString(device)) == -1 {
+		return getLastError()
+	}
+	if C.lvm_vg_write(v.Vgt) == -1 {
+		return getLastError()
+	}
+	return nil
+}
 
 // AddTag adds tag to VG.
 func (v *VgObject) AddTag(stag string) error {
@@ -200,7 +219,13 @@ func (v *VgObject) RemoveTag(stag string) error {
 	return nil
 }
 
-//        { "setExtentSize",      (PyCFunction)_liblvm_lvm_vg_set_extent_size, METH_VARARGS },
+// SetExtentSize sets extent size.
+func (v *VgObject) SetExtentSize(size uint32) error {
+	if C.lvm_vg_set_extent_size(v.Vgt, C.uint32_t(size)) == 1 {
+		return getLastError()
+	}
+	return nil
+}
 
 // IsClustered checks clustered or not.
 func (v *VgObject) IsClustered() bool {
@@ -333,7 +358,7 @@ func createGoLv(v *VgObject, lv C.lv_t) *LvObject {
 	}
 }
 
-// CreateLvLinear creates LV Object
+// CreateLvLinear creates LV Object.
 func (v *VgObject) CreateLvLinear(n string, s int64) (*LvObject, error) {
 	size := C.uint64_t(s)
 	name := C.CString(n)
